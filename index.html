@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DANH SÁCH ĐOÀN VIÊN TRƯỜNG THPT UNG VĂN KHIÊM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+    <h1 class="text-3xl font-bold text-center mb-6">DANH SÁCH ĐOÀN VIÊN TRƯỜNG THPT UNG VĂN KHIÊM</h1>
+
+    <div class="flex justify-center mb-4">
+        <select id="classFilter" class="border p-2 rounded">
+            <option value="">Tất cả các lớp</option>
+        </select>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white rounded shadow">
+            <thead>
+                <tr class="bg-blue-500 text-white">
+                    <th class="py-2 px-4">STT</th>
+                    <th class="py-2 px-4">TT Lớp</th>
+                    <th class="py-2 px-4">Mã HS</th>
+                    <th class="py-2 px-4">Họ tên</th>
+                    <th class="py-2 px-4">Ngày sinh</th>
+                    <th class="py-2 px-4">Giới tính</th>
+                    <th class="py-2 px-4">Lớp</th>
+                    <th class="py-2 px-4">Đoàn viên</th>
+                </tr>
+            </thead>
+            <tbody id="studentTable" class="text-center">
+                <!-- Dữ liệu sẽ được thêm ở đây -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+    let students = [];
+
+    // Đọc file JSON
+    fetch('dstonghop.json')
+        .then(response => response.json())
+        .then(data => {
+            students = data;
+            populateClassFilter();
+            renderTable();
+        });
+
+    // Đổ dữ liệu vào Table
+    function renderTable() {
+        const table = document.getElementById('studentTable');
+        const selectedClass = document.getElementById('classFilter').value;
+        table.innerHTML = '';
+
+        students
+            .filter(s => !selectedClass || s.LOP === selectedClass)
+            .forEach((student, index) => {
+                const row = document.createElement('tr');
+
+                row.innerHTML = `
+                    <td class="border px-4 py-2">${index + 1}</td>
+                    <td class="border px-4 py-2">${student.TT_LOP ?? ''}</td>
+                    <td class="border px-4 py-2">${student.MSHS ?? ''}</td>
+                    <td class="border px-4 py-2">${student.HO_TEN ?? ''}</td>
+                    <td class="border px-4 py-2">${formatDate(student.NGAY_SINH)}</td>
+                    <td class="border px-4 py-2">${student.GIOI_TINH ?? ''}</td>
+                    <td class="border px-4 py-2">${student.LOP ?? ''}</td>
+                    <td class="border px-4 py-2 ${student.DOAN_VIEN === 2025 ? 'text-red-500 font-bold' : ''}">
+                        ${student.DOAN_VIEN ?? ''}
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+    }
+
+    // Tạo bộ lọc lớp học
+    function populateClassFilter() {
+        const classSet = new Set(students.map(s => s.LOP).filter(Boolean));
+        const classFilter = document.getElementById('classFilter');
+        classSet.forEach(lop => {
+            const option = document.createElement('option');
+            option.value = lop;
+            option.textContent = lop;
+            classFilter.appendChild(option);
+        });
+
+        classFilter.addEventListener('change', renderTable);
+    }
+
+    // Định dạng ngày sinh
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        if (typeof dateStr === 'string') {
+            return dateStr;
+        } else if (typeof dateStr === 'object' && dateStr.hasOwnProperty('seconds')) {
+            // Nếu ngày sinh ở dạng Timestamp (seconds)
+            const date = new Date(dateStr.seconds * 1000);
+            return date.toLocaleDateString('vi-VN');
+        }
+        return '';
+    }
+    </script>
+</body>
+</html>
